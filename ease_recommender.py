@@ -159,7 +159,7 @@ def calculate_ease_for_item_logistic(X: csr_matrix, item_id: int, lambda_: float
 
     return similarities
 
-def a_to_b_error_metric(mat, a, b, lambda_, verbose=True):
+def a_to_b_error_metric(mat, a, b, lambda_, lambda_penalty=True, verbose=True):
     similarity_scores_a = calculate_ease_for_item_cg(mat, a, lambda_)
     ranking_a = np.argsort(-similarity_scores_a)
     
@@ -167,9 +167,11 @@ def a_to_b_error_metric(mat, a, b, lambda_, verbose=True):
     ranking_b = np.argsort(-similarity_scores_b)
     
     # lower is better
-#     error = (ranking_a.tolist().index(b) + ranking_b.tolist().index(a))/2
-    error = ranking_a.tolist().index(b) + ranking_b.tolist().index(a) + 1/lambda_
-#     error = ranking_a.tolist().index(b) + ranking_b.tolist().index(a) + (1 - 1/lambda_)
+    if lambda_penalty:
+        error = ranking_a.tolist().index(b) + ranking_b.tolist().index(a)
+        error += min(1, max(0, 1 - 1/lambda_))
+    else:
+        error = (ranking_a.tolist().index(b) + ranking_b.tolist().index(a))/2
     
     if verbose:
         print("lambda_:", lambda_)
@@ -196,4 +198,4 @@ def optimize_lambda_using_a_to_b_matching(mat, a, b, fast_approximation=True):
         res = minimize_scalar(lambda lambda_: a_to_b_error_metric(mat, a, b, lambda_), 
                               bracket=(lambda_, lambda_*10, lambda_*100))
 
-        return round(res.x)
+        return res.x
