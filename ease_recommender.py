@@ -168,10 +168,13 @@ def a_to_b_error_metric(mat, a, b, lambda_, lambda_penalty=True, verbose=True):
     
     # lower is better
     if lambda_penalty:
-        error = ranking_a.tolist().index(b) + ranking_b.tolist().index(a)
+#         error = ranking_a.tolist().index(b) + ranking_b.tolist().index(a)
+        error = max(ranking_a.tolist().index(b), ranking_b.tolist().index(a))
+        
         error += min(1, max(0, 1 - 1/lambda_))
     else:
-        error = (ranking_a.tolist().index(b) + ranking_b.tolist().index(a))/2
+#         error = (ranking_a.tolist().index(b) + ranking_b.tolist().index(a))/2
+        error = max(ranking_a.tolist().index(b), ranking_b.tolist().index(a))
     
     if verbose:
         print("lambda_:", lambda_)

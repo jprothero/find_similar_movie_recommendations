@@ -92,8 +92,11 @@ def a_to_b_error_metric_npmi_pop_weighted(mat, a, b, lambda_, lambda_penalty=Fal
     # lower is better
     if lambda_penalty:
         error = ranking_a.tolist().index(b) + ranking_b.tolist().index(a) + min(1, max(lambda_, 0))
+#         error = min(ranking_a.tolist().index(b), ranking_b.tolist().index(a)) + min(1, max(lambda_, 0))
+#         error = max(ranking_a.tolist().index(b), ranking_b.tolist().index(a)) + min(1, max(lambda_, 0))
     else:
         error = (ranking_a.tolist().index(b) + ranking_b.tolist().index(a))/2
+#         error = max(ranking_a.tolist().index(b), ranking_b.tolist().index(a))
     
     if verbose:
         print("lambda_:", lambda_)
