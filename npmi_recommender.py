@@ -104,14 +104,44 @@ def a_to_b_error_metric_npmi_pop_weighted(mat, a, b, lambda_, lambda_penalty=Fal
     
     return error
 
-def optimize_lambda_using_a_to_b_matching_npmi(mat, a, b, optimize_rank=True, verbose=True):
+def combine_npmi(cache_a, cache_b, a, b):
+    npmi_a, pxy = cache_a
+    npmi_b, _ = cache_b
+
+    npmi_a = np.copy(npmi_a)
+    npmi_b = np.copy(npmi_b)
+    
+    npmi_a[a] = npmi_b[a]
+    npmi_b[b] = npmi_a[b]
+
+    npmi = npmi_a * npmi_b
+    npmi[npmi > 0] = npmi[npmi > 0]**(1/2)
+
+#     npmi = (npmi_a + npmi_b)/2
+    
+    npmi[npmi < 0] = 0
+    
+    npmi_a = np.copy(npmi)
+    npmi_a[a] = 0
+    
+    npmi_b = np.copy(npmi)
+    npmi_b[b] = 0
+    
+    return (npmi_a, pxy), (npmi_b, pxy)
+
+def optimize_lambda_using_a_to_b_matching_npmi(mat, a, b, optimize_rank=True, do_combine_npmi=False, verbose=True):
     def f(lambda_, 
           cache_a=make_npmi_batch_popularity_weighted_cache(mat, a) if optimize_rank else None,
           cache_b=make_npmi_batch_popularity_weighted_cache(mat, b) if optimize_rank else None
          ):
         
         if optimize_rank:
-            return a_to_b_error_metric_npmi_pop_weighted(mat, a, b, lambda_, cache_a=cache_a, cache_b=cache_b, lambda_penalty=True)
+            if do_combine_npmi:
+                cache_a2, cache_b2 = combine_npmi(cache_a, cache_b, a, b)
+                
+                return a_to_b_error_metric_npmi_pop_weighted(mat, a, b, lambda_, cache_a=cache_a2, cache_b=cache_b2, lambda_penalty=True)
+            else:
+                return a_to_b_error_metric_npmi_pop_weighted(mat, a, b, lambda_, cache_a=cache_a, cache_b=cache_b, lambda_penalty=True)
         else:
             npmi_a = npmi_batch_popularity_weighted(mat, a, lambda_)
             npmi_b = npmi_batch_popularity_weighted(mat, b, lambda_)
@@ -123,4 +153,5 @@ def optimize_lambda_using_a_to_b_matching_npmi(mat, a, b, optimize_rank=True, ve
 
             return -score
     
-    return minimize_scalar(f, bounds=(0, 1)).x
+#     return minimize_scalar(f, bounds=(0, 1)).x
+    return minimize_scalar(f).x
